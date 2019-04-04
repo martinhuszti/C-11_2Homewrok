@@ -1,5 +1,7 @@
-int main(int argc, char const *argv[])
-{
+#include "Gonoszakasztofa.hpp"
 
+int main()
+{
+  Gonoszakasztofa game("szavak.txt");
   return 0;
 }
