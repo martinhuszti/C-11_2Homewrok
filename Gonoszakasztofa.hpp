@@ -10,6 +10,7 @@ class Word
 public:
         std::string string;
         std::string regex;
+
         Word(std::string s, std::string r) : string(s), regex(r){};
 };
 
@@ -25,7 +26,7 @@ class Gonoszakasztofa
 private:
         std::vector<Word> words;
         std::vector<char> tippchars;
-        std::vector<std::pair<std::string, std::string>> regex_map;
+        std::map<std::string, int> regex_occurances;
 
 public:
         Gonoszakasztofa(std::string const &filename)
@@ -73,11 +74,19 @@ public:
                                         word.regex += '.';
                                 }
                         }
-                        regex_map.push_back({word.regex, word.string}); //emplace insert helyett
-                                                                        //std::cout << word.string << " regexe: " << word.regex << "\n";
+
+                        auto it = regex_occurances.find(word.regex);
+                        if (it != regex_occurances.end())
+                        {
+                                it->second++;
+                        }
+                        else
+                        {
+                                regex_occurances.insert(std::make_pair(word.regex, 1));
+                        }
                 }
-                for (auto r : regex_map)
-                        std::cout << r.first << std::endl;
+                for (auto r : regex_occurances)
+                        std::cout << r.first << " darabja: " << r.second << std::endl;
         }
 
         void play()
