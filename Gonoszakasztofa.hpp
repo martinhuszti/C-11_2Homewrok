@@ -1,16 +1,19 @@
+#pragma once
+
 #include <iostream>
 #include <string>
 #include <fstream>
 #include <vector>
 #include <algorithm>
 #include <map>
+#include <set>
 #include <cctype>
 
 #include "Console_Write.hpp"
 
 class Word
 {
-public:
+      public:
         std::string string;
         std::string regex;
 
@@ -26,11 +29,12 @@ operator<<(std::ostream &os, const Word &w)
 
 class Gonoszakasztofa
 {
-private:
+      private:
         std::vector<Word> words;
-        std::vector<char> tippchars;
+        std::set<char> tippchars;
+        std::string displayed_string = "";
 
-public:
+      public:
         Gonoszakasztofa(std::string const &filename)
         {
                 std::ifstream infile(filename);
@@ -44,10 +48,21 @@ public:
 
         char RequestCharacter()
         {
-                AskForCharacterPrintLn();
-                char character;
-                std::cin >> character;
-                return character;
+                char c;
+                do
+                {
+                        AskForCharacterPrintLn();
+                        std::cin >> c;
+                        if (tippchars.count(c) != 0)
+                        {
+                                AlreadyTippedPrintLn();
+                        }
+                        else
+                        {
+                                tippchars.insert(c);
+                                return std::move(c);
+                        }
+                } while (true); //contains c++20-nál
         }
 
         void cleanArrayByRegex(std::pair<std::string, int> &finalRegex)
@@ -58,17 +73,18 @@ public:
                             words.end());
         }
 
-        bool GetRegexMap(char tippedchar)
+        std::pair<std::string, int> GetValidRegex(char tippedchar)
         {
                 std::map<std::string, int> reg_occurs;
 
                 for (auto &word : words)
                 {
+                        word.regex = ""; //nullázuk a szó regexét
                         for (auto &c : word.string)
                         {
                                 if (tippedchar == c)
                                 {
-                                        word.regex += 'x'; //ha benne van x-el jelölöm
+                                        word.regex += c; //ha benne van x-el jelölöm
                                 }
                                 else
                                 {
@@ -93,11 +109,13 @@ public:
                         if (r.second > valid_regex.second)
                                 valid_regex = r;
                 }
-                //std::cout << "Megfelelő regex: " << valid_regex.first << " darabja: " << valid_regex.second << std::endl;
 
-                cleanArrayByRegex(valid_regex);
+                return valid_regex;
+        }
 
-                return (valid_regex.first.find('x') == std::string::npos) ? false : true;
+        bool isCorrectTip(const std::pair<std::string, int> &valid_regex, const char &c)
+        {
+                return (valid_regex.first.find(c) == std::string::npos) ? false : true;
         }
 
         void play()
@@ -106,23 +124,64 @@ public:
                 gameLoop();
         }
 
+        bool isGameEnded(const int &elet)
+        {
+                if (elet == 0)
+                {
+                        YouLosePrintLn();
+                        return true;
+                }
+
+                if (displayed_string.find('.') == std::string::npos)
+                {
+                        YouWinPrintLn();
+                        return true;
+                }
+
+                return false;
+        }
+
+        void mergeWithTemplate(const std::string &regex)
+        {
+                if (displayed_string.empty())
+                {
+                        displayed_string = regex;
+                        return;
+                }
+
+                for (int i = 0; i < regex.size(); i++)
+                {
+                        if (displayed_string[i] != '.')
+                                continue;
+                        else
+                                displayed_string[i] = regex[i];
+                }
+        }
+
         void gameLoop()
         {
                 bool endGame = false;
+                int elet = 10;
                 while (!endGame)
                 {
-                        for (auto w : words)
-                        {
-                                std::cout << w.string << std::endl;
-                        }
 
-                        char c = RequestCharacter();        //beolvasunk egy karaktert
-                        tippchars.push_back(c);             //hozzáadjuk a karakter a tippeltekhez
-                        bool a = GetRegexMap(std::move(c)); //megkeressuk a karaktert
-                        if (words.size() == 1)
-                        {
-                                YouWinPrintLn();
-                        }
+                        ShowOpportunitiesPrintLn(); //felsoroljuk a lehetőségeket
+                        for (auto &w : words)
+                                WordPrintLn(w.string);
+
+                        char c = RequestCharacter(); //beolvasunk egy karaktert
+
+                        auto valid_regex = GetValidRegex(std::move(c)); //megkeressuk a karaktert
+
+                        mergeWithTemplate(valid_regex.first); //mergeljük a kiirando szavakkal
+
+                        cleanArrayByRegex(valid_regex); //Kitöröljük azokat a szavakat amik nem illenek a regexre
+
+                        (isCorrectTip(valid_regex, c)) ? GoodTipp() : BadTipp(elet); //megnézzük hogy helyes-e a tipp
+
+                        displayCurrentStringPrintLn(displayed_string);
+
+                        endGame = isGameEnded(elet);
                 }
         }
 };
