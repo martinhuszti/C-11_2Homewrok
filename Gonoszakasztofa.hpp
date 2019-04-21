@@ -2,7 +2,8 @@
 #include <string>
 #include <fstream>
 #include <vector>
-#include <regex>
+#include <algorithm>
+#include <map>
 #include "Console_Write.hpp"
 
 class Word
@@ -26,7 +27,7 @@ class Gonoszakasztofa
 private:
         std::vector<Word> words;
         std::vector<char> tippchars;
-        std::map<std::string, int> regex_occurances;
+        std::map<std::string, int> reg_occurs;
 
 public:
         Gonoszakasztofa(std::string const &filename)
@@ -48,17 +49,6 @@ public:
                 return character;
         }
 
-        // int countMatchInRegex(std::string s, char c)
-        // {
-
-        //         std::regex words_regex(c);
-        //         auto words_begin = std::sregex_iterator(
-        //             s.begin(), s.end(), words_regex);
-        //         auto words_end = std::sregex_iterator();
-
-        //         return std::distance(words_begin, words_end);
-        // }
-
         void SearchForMatch(char tippedchar)
         {
                 for (auto &word : words)
@@ -67,7 +57,7 @@ public:
                         {
                                 if (tippedchar == c)
                                 {
-                                        word.regex += c;
+                                        word.regex += 'x';
                                 }
                                 else
                                 {
@@ -75,26 +65,32 @@ public:
                                 }
                         }
 
-                        auto it = regex_occurances.find(word.regex);
-                        if (it != regex_occurances.end())
+                        auto it = reg_occurs.find(word.regex);
+                        if (it != reg_occurs.end())
                         {
                                 it->second++;
                         }
                         else
                         {
-                                regex_occurances.insert(std::make_pair(word.regex, 1));
+                                reg_occurs.insert(std::make_pair(word.regex, 1));
                         }
                 }
-                for (auto r : regex_occurances)
-                        std::cout << r.first << " darabja: " << r.second << std::endl;
+
+                std::pair<std::string, int> valid_regex("", 0);
+                for (auto r : reg_occurs)
+                {
+                        if (r.second > valid_regex.second)
+                                valid_regex = r;
+                }
+                std::cout << "Megfelelő regex: " << valid_regex.first << " darabja: " << valid_regex.second << std::endl;
         }
 
         void play()
         {
-                WelcomePrintLn();                   //koszontő
-                std::cout << words[0] << std::endl; //kiirjuk a bemntélvő szavakat
-                char c = RequestCharacter();        //beolvasunk egy karaktert
-                tippchars.push_back(c);             //hozzáadjuk a karakter a tippeltekhez
-                SearchForMatch(std::move(c));       //megkeressuk a karaktert
+                WelcomePrintLn(); //koszontő
+                //std::cout << words[0] << std::endl; //kiirjuk a bemntélvő szavakat
+                char c = RequestCharacter();  //beolvasunk egy karaktert
+                tippchars.push_back(c);       //hozzáadjuk a karakter a tippeltekhez
+                SearchForMatch(std::move(c)); //megkeressuk a karaktert
         }
 };
