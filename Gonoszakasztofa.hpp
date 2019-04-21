@@ -4,6 +4,8 @@
 #include <vector>
 #include <algorithm>
 #include <map>
+#include <cctype>
+
 #include "Console_Write.hpp"
 
 class Word
@@ -27,12 +29,11 @@ class Gonoszakasztofa
 private:
         std::vector<Word> words;
         std::vector<char> tippchars;
-        std::map<std::string, int> reg_occurs;
 
 public:
         Gonoszakasztofa(std::string const &filename)
         {
-                std::ifstream infile("szavak.txt");
+                std::ifstream infile(filename);
 
                 std::string word;
                 while (infile >> word)
@@ -49,30 +50,40 @@ public:
                 return character;
         }
 
-        void SearchForMatch(char tippedchar)
+        void cleanArrayByRegex(std::pair<std::string, int> &finalRegex)
         {
+                words.erase(std::remove_if(words.begin(), words.end(), [&](const Word &w) {
+                                    return (finalRegex.first.compare(w.regex));
+                            }),
+                            words.end());
+        }
+
+        bool GetRegexMap(char tippedchar)
+        {
+                std::map<std::string, int> reg_occurs;
+
                 for (auto &word : words)
                 {
                         for (auto &c : word.string)
                         {
                                 if (tippedchar == c)
                                 {
-                                        word.regex += 'x';
+                                        word.regex += 'x'; //ha benne van x-el jelölöm
                                 }
                                 else
                                 {
-                                        word.regex += '.';
+                                        word.regex += '.'; //ha nincs benne .-al
                                 }
                         }
 
                         auto it = reg_occurs.find(word.regex);
                         if (it != reg_occurs.end())
                         {
-                                it->second++;
+                                it->second++; // növelem az előfordulás számát
                         }
                         else
                         {
-                                reg_occurs.insert(std::make_pair(word.regex, 1));
+                                reg_occurs.insert(std::make_pair(word.regex, 1)); //hozzáadom ha még nincs
                         }
                 }
 
@@ -82,15 +93,36 @@ public:
                         if (r.second > valid_regex.second)
                                 valid_regex = r;
                 }
-                std::cout << "Megfelelő regex: " << valid_regex.first << " darabja: " << valid_regex.second << std::endl;
+                //std::cout << "Megfelelő regex: " << valid_regex.first << " darabja: " << valid_regex.second << std::endl;
+
+                cleanArrayByRegex(valid_regex);
+
+                return (valid_regex.first.find('x') == std::string::npos) ? false : true;
         }
 
         void play()
         {
                 WelcomePrintLn(); //koszontő
-                //std::cout << words[0] << std::endl; //kiirjuk a bemntélvő szavakat
-                char c = RequestCharacter();  //beolvasunk egy karaktert
-                tippchars.push_back(c);       //hozzáadjuk a karakter a tippeltekhez
-                SearchForMatch(std::move(c)); //megkeressuk a karaktert
+                gameLoop();
+        }
+
+        void gameLoop()
+        {
+                bool endGame = false;
+                while (!endGame)
+                {
+                        for (auto w : words)
+                        {
+                                std::cout << w.string << std::endl;
+                        }
+
+                        char c = RequestCharacter();        //beolvasunk egy karaktert
+                        tippchars.push_back(c);             //hozzáadjuk a karakter a tippeltekhez
+                        bool a = GetRegexMap(std::move(c)); //megkeressuk a karaktert
+                        if (words.size() == 1)
+                        {
+                                YouWinPrintLn();
+                        }
+                }
         }
 };
