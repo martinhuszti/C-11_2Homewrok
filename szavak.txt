@@ -1,6 +1,6 @@
 aroma
 adoma
 apuka
-strand
-startzizeg
+start
+zizeg
 zokni
