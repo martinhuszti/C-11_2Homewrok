@@ -31,7 +31,7 @@ class Gonoszakasztofa
 {
       private:
         std::vector<Word> words;
-        std::set<char> tippchars;
+        std::set<char> tippedChars;
         std::string displayed_string = "";
 
       public:
@@ -53,13 +53,15 @@ class Gonoszakasztofa
                 {
                         AskForCharacterPrintLn();
                         std::cin >> c;
-                        if (tippchars.count(c) != 0)
+                        c = tolower(c);
+                        if (tippedChars.count(c) != 0)
                         {
                                 AlreadyTippedPrintLn();
+                                ReadedCharacters(tippedChars);
                         }
                         else
                         {
-                                tippchars.insert(c);
+                                tippedChars.insert(c);
                                 return std::move(c);
                         }
                 } while (true); //contains c++20-nál
@@ -120,7 +122,8 @@ class Gonoszakasztofa
 
         void play()
         {
-                WelcomePrintLn(); //koszontő
+                ClearScreen();
+                WelcomePrintLn();
                 gameLoop();
         }
 
@@ -171,6 +174,10 @@ class Gonoszakasztofa
 
                         char c = RequestCharacter(); //beolvasunk egy karaktert
 
+                        ClearScreen();
+
+                        ReadedCharacters(tippedChars);
+
                         auto valid_regex = GetValidRegex(std::move(c)); //megkeressuk a karaktert
 
                         mergeWithTemplate(valid_regex.first); //mergeljük a kiirando szavakkal
@@ -179,7 +186,7 @@ class Gonoszakasztofa
 
                         (isCorrectTip(valid_regex, c)) ? GoodTipp() : BadTipp(elet); //megnézzük hogy helyes-e a tipp
 
-                        displayCurrentStringPrintLn(displayed_string);
+                        DisplayCurrentStringPrintLn(displayed_string);
 
                         endGame = isGameEnded(elet);
                 }

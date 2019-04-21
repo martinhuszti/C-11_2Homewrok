@@ -3,6 +3,7 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <set>
 
 #include "Gonoszakasztofa.hpp"
 
@@ -51,7 +52,22 @@ static void AlreadyTippedPrintLn()
         std::cout << "Ezt a betűt már egyszer tippelted. Adj meg egy másikat!\n";
 }
 
-static void displayCurrentStringPrintLn(const std::string &s)
+static void DisplayCurrentStringPrintLn(const std::string &s)
 {
         std::cout << "\n\t\t" << s << "\n\n";
+}
+
+static void ClearScreen()
+{
+        std::cout << "\033[2J\033[1;1H";
+}
+
+static void ReadedCharacters(const std::set<char> &tippchars)
+{
+        std::cout << "Eddig tippelt karakterek: ";
+        for (auto &c : tippchars)
+        {
+                std::cout << c << " ";
+        }
+        std::cout << std::endl;
 }
