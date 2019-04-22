@@ -1,4 +1,5 @@
-#pragma once
+#ifndef CONSOLEWRITE_HEADER_FILE
+#define CONSOLEWRITE_HEADER_FILE
 
 #include <iostream>
 #include <vector>
@@ -62,12 +63,14 @@ static void ClearScreen()
         std::cout << "\033[2J\033[1;1H";
 }
 
-static void ReadedCharacters(const std::set<char> &tippchars)
+static void ReadedCharactersPrintLn(const std::set<char> &tippchars)
 {
         std::cout << "Eddig tippelt karakterek: ";
         for (auto &c : tippchars)
         {
                 std::cout << c << " ";
         }
-        std::cout << std::endl;
+        std::cout << "\n\n";
 }
+
+#endif

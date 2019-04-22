@@ -1,4 +1,5 @@
-#pragma once
+#ifndef GONOSZAKASZTOFA_HEADER_FILE
+#define GONOSZAKASZTOFA_HEADER_FILE
 
 #include <iostream>
 #include <string>
@@ -13,7 +14,7 @@
 
 class Word
 {
-      public:
+public:
         std::string string;
         std::string regex;
 
@@ -29,22 +30,10 @@ operator<<(std::ostream &os, const Word &w)
 
 class Gonoszakasztofa
 {
-      private:
+private:
         std::vector<Word> words;
         std::set<char> tippedChars;
         std::string displayed_string = "";
-
-      public:
-        Gonoszakasztofa(std::string const &filename)
-        {
-                std::ifstream infile(filename);
-
-                std::string word;
-                while (infile >> word)
-                {
-                        words.push_back(std::move(Word(word, "")));
-                }
-        }
 
         char RequestCharacter()
         {
@@ -57,7 +46,7 @@ class Gonoszakasztofa
                         if (tippedChars.count(c) != 0)
                         {
                                 AlreadyTippedPrintLn();
-                                ReadedCharacters(tippedChars);
+                                ReadedCharactersPrintLn(tippedChars);
                         }
                         else
                         {
@@ -67,64 +56,74 @@ class Gonoszakasztofa
                 } while (true); //contains c++20-nál
         }
 
-        void cleanArrayByRegex(std::pair<std::string, int> &finalRegex)
+        void cleanArrayByRegex(std::string const &finalRegex)
         {
-                words.erase(std::remove_if(words.begin(), words.end(), [&](const Word &w) {
-                                    return (finalRegex.first.compare(w.regex));
-                            }),
+                words.erase(std::remove_if(words.begin(), words.end(),
+
+                                           [&](const Word &w) {
+                                                   return (finalRegex.compare(w.regex));
+                                           }),
+
                             words.end());
         }
 
-        std::pair<std::string, int> GetValidRegex(char tippedchar)
+        void updateWordRegex(Word &word, const char &tippedchar)
+        {
+                word.regex = ""; //nullázuk a szó regexét
+                for (auto &c : word.string)
+                {
+                        if (tippedchar == c) //ha benne van
+                        {
+                                word.regex += c; //beírom a karaktert
+                        }
+                        else //ha nincs benne
+                        {
+                                word.regex += '.'; // .-ot rakok
+                        }
+                }
+        }
+
+        void addOccurancesByRegex(std::map<std::string, int> &reg_occurs, const std::string &regex)
+        {
+                auto it = reg_occurs.find(regex);
+                if (it != reg_occurs.end()) //ha már létezik a map-ben
+                {
+                        it->second++; // növelem az előfordulás számát
+                }
+                else //ha még nem létezik
+                {
+                        reg_occurs.insert(std::make_pair(regex, 1)); //hozzáadom
+                }
+        }
+
+        std::string searchgMostOccurancesRegex(std::map<std::string, int> const &reg_occurs)
+        {
+                std::pair<std::string, int> regex_pair("", 0);
+                for (auto it : reg_occurs)
+                {
+                        if (it.second > regex_pair.second)
+                                regex_pair = it;
+                }
+                return std::move(regex_pair.first);
+        }
+
+        std::string GenerateValidRegex(char const tippedchar)
         {
                 std::map<std::string, int> reg_occurs;
 
                 for (auto &word : words)
                 {
-                        word.regex = ""; //nullázuk a szó regexét
-                        for (auto &c : word.string)
-                        {
-                                if (tippedchar == c)
-                                {
-                                        word.regex += c; //ha benne van x-el jelölöm
-                                }
-                                else
-                                {
-                                        word.regex += '.'; //ha nincs benne .-al
-                                }
-                        }
+                        updateWordRegex(word, tippedchar); //frissítjük a szónak a regexét a tippelt karakter alapján
 
-                        auto it = reg_occurs.find(word.regex);
-                        if (it != reg_occurs.end())
-                        {
-                                it->second++; // növelem az előfordulás számát
-                        }
-                        else
-                        {
-                                reg_occurs.insert(std::make_pair(word.regex, 1)); //hozzáadom ha még nincs
-                        }
+                        addOccurancesByRegex(reg_occurs, word.regex); //frissítjük a regex előfordulás számosságát
                 }
 
-                std::pair<std::string, int> valid_regex("", 0);
-                for (auto r : reg_occurs)
-                {
-                        if (r.second > valid_regex.second)
-                                valid_regex = r;
-                }
-
-                return valid_regex;
+                return searchgMostOccurancesRegex(reg_occurs);
         }
 
-        bool isCorrectTip(const std::pair<std::string, int> &valid_regex, const char &c)
+        bool isCorrectTip(const std::string &updateWordRegex, const char &c)
         {
-                return (valid_regex.first.find(c) == std::string::npos) ? false : true;
-        }
-
-        void play()
-        {
-                ClearScreen();
-                WelcomePrintLn();
-                gameLoop();
+                return (updateWordRegex.find(c) == std::string::npos) ? false : true;
         }
 
         bool isGameEnded(const int &elet)
@@ -152,7 +151,7 @@ class Gonoszakasztofa
                         return;
                 }
 
-                for (int i = 0; i < regex.size(); i++)
+                for (unsigned i = 0; i < regex.size(); i++)
                 {
                         if (displayed_string[i] != '.')
                                 continue;
@@ -176,11 +175,11 @@ class Gonoszakasztofa
 
                         ClearScreen();
 
-                        ReadedCharacters(tippedChars);
+                        ReadedCharactersPrintLn(tippedChars);
 
-                        auto valid_regex = GetValidRegex(std::move(c)); //megkeressuk a karaktert
+                        auto valid_regex = GenerateValidRegex(std::move(c)); //megkeressuk a karaktert
 
-                        mergeWithTemplate(valid_regex.first); //mergeljük a kiirando szavakkal
+                        mergeWithTemplate(valid_regex); //mergeljük a kiirando szavakkal
 
                         cleanArrayByRegex(valid_regex); //Kitöröljük azokat a szavakat amik nem illenek a regexre
 
@@ -191,4 +190,25 @@ class Gonoszakasztofa
                         endGame = isGameEnded(elet);
                 }
         }
+
+public:
+        Gonoszakasztofa(std::string const filename)
+        {
+                std::ifstream infile(filename);
+
+                std::string word;
+                while (infile >> word)
+                {
+                        words.push_back(std::move(Word(word, "")));
+                }
+        }
+
+        void play()
+        {
+                ClearScreen();
+                WelcomePrintLn();
+                gameLoop();
+        }
 };
+
+#endif
