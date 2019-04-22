@@ -3,6 +3,6 @@
 int main()
 {
   Gonoszakasztofa game("szavak.txt");
-  game.play();
+  game.Play();
   return 0;
 }

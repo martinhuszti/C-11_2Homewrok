@@ -10,7 +10,7 @@
 #include <set>
 #include <cctype>
 
-#include "Console_Write.hpp"
+#include "Console_Write.cpp"
 
 class Word
 {
@@ -21,19 +21,12 @@ public:
         Word(std::string s, std::string r) : string(s), regex(r){};
 };
 
-std::ostream &
-operator<<(std::ostream &os, const Word &w)
-{
-        os << w.string;
-        return os;
-}
-
 class Gonoszakasztofa
 {
 private:
-        std::vector<Word> words;
-        std::set<char> tippedChars;
-        std::string displayed_string = "";
+        std::vector<Word> words;           //lehetséges szavak
+        std::set<char> tippedChars;        //eddig tippelt karakterek
+        std::string displayed_string = ""; //lehetséges szó templétje
 
         char RequestCharacter()
         {
@@ -96,7 +89,7 @@ private:
                 }
         }
 
-        std::string searchgMostOccurancesRegex(std::map<std::string, int> const &reg_occurs)
+        std::string MostOccurancesRegex(std::map<std::string, int> const &reg_occurs)
         {
                 std::pair<std::string, int> regex_pair("", 0);
                 for (auto it : reg_occurs)
@@ -118,10 +111,10 @@ private:
                         addOccurancesByRegex(reg_occurs, word.regex); //frissítjük a regex előfordulás számosságát
                 }
 
-                return searchgMostOccurancesRegex(reg_occurs);
+                return MostOccurancesRegex(reg_occurs);
         }
 
-        bool isCorrectTip(const std::string &updateWordRegex, const char &c)
+        bool isCorrectTip(const std::string &updateWordRegex, const char &c) const
         {
                 return (updateWordRegex.find(c) == std::string::npos) ? false : true;
         }
@@ -143,7 +136,7 @@ private:
                 return false;
         }
 
-        void mergeWithTemplate(const std::string &regex)
+        void updateDisplayStringByRegex(const std::string &regex)
         {
                 if (displayed_string.empty())
                 {
@@ -179,7 +172,7 @@ private:
 
                         auto valid_regex = GenerateValidRegex(std::move(c)); //megkeressuk a karaktert
 
-                        mergeWithTemplate(valid_regex); //mergeljük a kiirando szavakkal
+                        updateDisplayStringByRegex(valid_regex); //mergeljük a kiirando szavakkal
 
                         cleanArrayByRegex(valid_regex); //Kitöröljük azokat a szavakat amik nem illenek a regexre
 
@@ -199,14 +192,15 @@ public:
                 std::string word;
                 while (infile >> word)
                 {
-                        words.push_back(std::move(Word(word, "")));
+                        words.push_back({word, ""});
                 }
         }
 
-        void play()
+        void Play()
         {
                 ClearScreen();
                 WelcomePrintLn();
+
                 gameLoop();
         }
 };
