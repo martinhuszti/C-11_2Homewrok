@@ -5,11 +5,11 @@
 #include <algorithm>
 #include <map>
 #include <set>
-#include <cctype>
 
 #include "Console_Write.cpp"
 #include "Gonoszakasztofa.hpp"
 
+//Beolvassa a fájlt, és kigyűjti a szavakat
 Gonoszakasztofa::Gonoszakasztofa(std::string const filename)
 {
     std::ifstream infile(filename);
@@ -21,14 +21,15 @@ Gonoszakasztofa::Gonoszakasztofa(std::string const filename)
     }
 }
 
+//Köszönti a felhasználót, majd elindítja a játékotot
 void Gonoszakasztofa::Play()
 {
     ClearScreen();
     WelcomePrintLn();
-
     gameLoop();
 }
 
+//Bekér egy karaktert
 char Gonoszakasztofa::RequestCharacter()
 {
     char c;
@@ -37,7 +38,7 @@ char Gonoszakasztofa::RequestCharacter()
         AskForCharacterPrintLn();
         std::cin >> c;
         c = tolower(c);
-        if (tippedChars.count(c) != 0)
+        if (tippedChars.count(c) != 0) // ha már tippelte a beolvasott karaktert újra elkérjük
         {
             AlreadyTippedPrintLn();
             ReadedCharactersPrintLn(tippedChars);
@@ -47,9 +48,10 @@ char Gonoszakasztofa::RequestCharacter()
             tippedChars.insert(c);
             return std::move(c);
         }
-    } while (true); //contains c++20-nál
+    } while (true);
 }
 
+//Kitörli a regexre nem illeszkedő szavakat
 void Gonoszakasztofa::cleanArrayByRegex(std::string const &finalRegex)
 {
     words.erase(std::remove_if(words.begin(), words.end(),
@@ -61,6 +63,7 @@ void Gonoszakasztofa::cleanArrayByRegex(std::string const &finalRegex)
                 words.end());
 }
 
+//A szó regexét frissíti a megadott karakter alapján
 void Gonoszakasztofa::updateWordRegex(Word &word, const char &tippedchar)
 {
     word.regex = ""; //nullázuk a szó regexét
@@ -77,6 +80,7 @@ void Gonoszakasztofa::updateWordRegex(Word &word, const char &tippedchar)
     }
 }
 
+//Hozzáadja a maphez a regexet
 void Gonoszakasztofa::addOccurancesByRegex(std::map<std::string, int> &reg_occurs, const std::string &regex)
 {
     auto it = reg_occurs.find(regex);
@@ -90,6 +94,7 @@ void Gonoszakasztofa::addOccurancesByRegex(std::map<std::string, int> &reg_occur
     }
 }
 
+//A kapott Map alapján visszaadja a legtöbbször előfroduló regexet
 std::string Gonoszakasztofa::MostOccurancesRegex(std::map<std::string, int> const &reg_occurs)
 {
     std::pair<std::string, int> regex_pair("", 0);
@@ -101,6 +106,7 @@ std::string Gonoszakasztofa::MostOccurancesRegex(std::map<std::string, int> cons
     return std::move(regex_pair.first);
 }
 
+//A karakter alapján visszaadja a legtöbbször előfroduló regexet
 std::string Gonoszakasztofa::GenerateValidRegex(char const tippedchar)
 {
     std::map<std::string, int> reg_occurs;
@@ -115,20 +121,22 @@ std::string Gonoszakasztofa::GenerateValidRegex(char const tippedchar)
     return MostOccurancesRegex(reg_occurs);
 }
 
+//Megmondja hogy a beolvasott betű helyes tipp volt-e
 bool Gonoszakasztofa::isCorrectTip(const std::string &updateWordRegex, const char &c) const
 {
     return (updateWordRegex.find(c) == std::string::npos) ? false : true;
 }
 
+//Megmondja hogy vége van-e a játéknak
 bool Gonoszakasztofa::isGameEnded(const int &elet)
 {
-    if (elet == 0)
+    if (elet == 0) //ha elfogyott az élete
     {
         YouLosePrintLn();
         return true;
     }
 
-    if (displayed_string.find('.') == std::string::npos)
+    if (displayed_string.find('.') == std::string::npos) // ha már nincs ki nem talált betű
     {
         YouWinPrintLn();
         return true;
@@ -137,6 +145,7 @@ bool Gonoszakasztofa::isGameEnded(const int &elet)
     return false;
 }
 
+//Összemergeli az eddig tippelt "templétjét" és a kapott regexet
 void Gonoszakasztofa::updateDisplayStringByRegex(const std::string &regex)
 {
     if (displayed_string.empty())
@@ -154,10 +163,12 @@ void Gonoszakasztofa::updateDisplayStringByRegex(const std::string &regex)
     }
 }
 
+//A játék logikája
 void Gonoszakasztofa::gameLoop()
 {
     bool endGame = false;
     int elet = 10;
+
     while (!endGame)
     {
 
@@ -171,7 +182,7 @@ void Gonoszakasztofa::gameLoop()
 
         ReadedCharactersPrintLn(tippedChars);
 
-        auto valid_regex = GenerateValidRegex(std::move(c)); //megkeressuk a karaktert
+        std::string valid_regex = GenerateValidRegex(c); //megkeressuk a karaktert
 
         updateDisplayStringByRegex(valid_regex); //mergeljük a kiirando szavakkal
 
@@ -181,6 +192,6 @@ void Gonoszakasztofa::gameLoop()
 
         DisplayCurrentStringPrintLn(displayed_string);
 
-        endGame = isGameEnded(elet);
+        endGame = isGameEnded(elet); //megnézzük vége van-e a játéknak
     }
 }

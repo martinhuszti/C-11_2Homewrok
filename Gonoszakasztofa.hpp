@@ -1,14 +1,10 @@
 #ifndef GONOSZAKASZTOFA_HEADER_FILE
 #define GONOSZAKASZTOFA_HEADER_FILE
 
-#include <iostream>
 #include <string>
-#include <fstream>
 #include <vector>
-#include <algorithm>
 #include <map>
 #include <set>
-#include <cctype>
 
 class Word
 {
@@ -24,7 +20,7 @@ class Gonoszakasztofa
 private:
         std::vector<Word> words;           //lehetséges szavak
         std::set<char> tippedChars;        //eddig tippelt karakterek
-        std::string displayed_string = ""; //lehetséges szó templétje
+        std::string displayed_string = ""; //eddig tippelt szó "templétje"
 
         char RequestCharacter();
 
